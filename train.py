@@ -16,16 +16,6 @@ import plotly.graph_objects as go
 
 import pickle
 
-appModel = Flask(__name__) # initializing a flask app
-
-@appModel.route('/', methods=['GET'])  # route to display the home page
-@cross_origin()
-def homePage():
-    prediction = trainmodel()
-    print('prediction is', prediction)
-    # showing the prediction results in a UI
-    return render_template('results.html', prediction=prediction)
-    #return render_template("index.html")
 
 
 def trainmodel():
@@ -67,5 +57,4 @@ def trainmodel():
         return { "accuracy": acc, "specificity": specificity, "sensitivity":sensitivity}
 
 if __name__ == "__main__":
-	appModel.run(debug=True) # running the app
-
+        trainmodel()
