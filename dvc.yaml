@@ -11,12 +11,12 @@ stages:
     - process_data.py
     - data_raw.csv
     outs:
-    - data_processed.csv
+    - dataprocessed.csv
   train:
     cmd: python train.py
     deps:
     - train.py
-    - data_processed.csv
+    - dataprocessed.csv
     outs:
     - by_region.png
     metrics:

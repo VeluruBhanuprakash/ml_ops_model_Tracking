@@ -19,7 +19,7 @@ import pickle
 
 
 def trainmodel():
-        df = pd.read_csv("data_processed.csv")
+        df = pd.read_csv("dataprocessed.csv")
         #### Get features ready to model! 
         y = df.pop("cons_general").to_numpy()
         y[y< 4] = 0
