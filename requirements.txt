@@ -3,3 +3,10 @@ sklearn
 pandas
 seaborn
 matplotlib
+flask
+Flask==1.1.1
+Flask-Cors==3.0.8
+gunicorn==20.0.4
+plotly
+kaleido
+

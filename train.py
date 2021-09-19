@@ -10,44 +10,62 @@ import json
 import seaborn as sns
 import matplotlib.pyplot as plt
 from sklearn.impute import SimpleImputer
+from flask import Flask, render_template, request,jsonify
+from flask_cors import CORS,cross_origin
+import plotly.graph_objects as go
 
-df = pd.read_csv("data_processed.csv")
+import pickle
 
-#### Get features ready to model! 
-y = df.pop("cons_general").to_numpy()
-y[y< 4] = 0
-y[y>= 4] = 1
+appModel = Flask(__name__) # initializing a flask app
 
-X = df.to_numpy()
-X = preprocessing.scale(X) # Is standard
-# Impute NaNs
-
-imp = SimpleImputer(missing_values=np.nan, strategy='mean')
-imp.fit(X)
-X = imp.transform(X)
+@appModel.route('/', methods=['GET'])  # route to display the home page
+@cross_origin()
+def homePage():
+    prediction = trainmodel()
+    print('prediction is', prediction)
+    # showing the prediction results in a UI
+    return render_template('results.html', prediction=prediction)
+    #return render_template("index.html")
 
 
-# Linear model
-clf = LogisticRegression()
-yhat = cross_val_predict(clf, X, y, cv=5)
+def trainmodel():
+        df = pd.read_csv("data_processed.csv")
+        #### Get features ready to model! 
+        y = df.pop("cons_general").to_numpy()
+        y[y< 4] = 0
+        y[y>= 4] = 1
+        X = df.to_numpy()
+        X = preprocessing.scale(X) # Is standard
+        # Impute NaNs
+        imp = SimpleImputer(missing_values=np.nan, strategy='mean')
+        imp.fit(X)
+        X = imp.transform(X)
+        # Linear model
+        clf = LogisticRegression()
+        yhat = cross_val_predict(clf, X, y, cv=5)
+        acc = np.mean(yhat==y)
+        tn, fp, fn, tp = confusion_matrix(y, yhat).ravel()
+        specificity = tn / (tn+fp)
+        sensitivity = tp / (tp + fn)
+        # Now print to file
+        with open("metrics.json", 'w') as outfile:
+                json.dump({ "accuracy": acc, "specificity": specificity, "sensitivity":sensitivity}, outfile)
 
-acc = np.mean(yhat==y)
-tn, fp, fn, tp = confusion_matrix(y, yhat).ravel()
-specificity = tn / (tn+fp)
-sensitivity = tp / (tp + fn)
+        # Let's visualize within several slices of the dataset
+        score = yhat == y
+        score_int = [int(s) for s in score]
+        df['pred_accuracy'] = score_int
 
-# Now print to file
-with open("metrics.json", 'w') as outfile:
-        json.dump({ "accuracy": acc, "specificity": specificity, "sensitivity":sensitivity}, outfile)
+        # Bar plot by region
 
-# Let's visualize within several slices of the dataset
-score = yhat == y
-score_int = [int(s) for s in score]
-df['pred_accuracy'] = score_int
+        '''sns.set_color_codes("dark")
+        ax = sns.barplot(x="region", y="pred_accuracy", data=df, palette = "Greens_d")
+        ax.set(xlabel="Region", ylabel = "Model accuracy")
+        plt.savefig("by_region.png", dpi=80)'''
+        fig = fig = go.Figure([go.Bar(x=df["region"], y=df["pred_accuracy"])])
+        fig.write_image("by_region.png")
+        return { "accuracy": acc, "specificity": specificity, "sensitivity":sensitivity}
 
-# Bar plot by region
+if __name__ == "__main__":
+	appModel.run(debug=True) # running the app
 
-sns.set_color_codes("dark")
-ax = sns.barplot(x="region", y="pred_accuracy", data=df, palette = "Greens_d")
-ax.set(xlabel="Region", ylabel = "Model accuracy")
-plt.savefig("by_region.png",dpi=80)
