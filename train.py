@@ -32,7 +32,7 @@ def trainmodel():
         X = imp.transform(X)
         # Linear model
         clf = LogisticRegression()
-        yhat = cross_val_predict(clf, X, y, cv=5)
+        yhat = cross_val_predict(clf, X, y, cv=15)
         acc = np.mean(yhat==y)
         tn, fp, fn, tp = confusion_matrix(y, yhat).ravel()
         specificity = tn / (tn+fp)
